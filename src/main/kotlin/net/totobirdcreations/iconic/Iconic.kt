@@ -36,6 +36,7 @@ object Iconic : ClientModInitializer {
 		ClientPlayConnectionEvents.INIT.register{ _, _ -> IconCache.openThreads(); }
 		ClientPlayConnectionEvents.DISCONNECT.register{ _, _ -> IconCache.closeThreads(); IconCache.invalidate(); }
 
-		ClientSendMessageEvents.MODIFY_CHAT.register{ message -> ChatScanner.replaceMessageIcons(message) };
+		ClientSendMessageEvents.MODIFY_CHAT    .register{ message -> ChatScanner.replaceMessageIcons(message) };
+		ClientSendMessageEvents.MODIFY_COMMAND .register{ message -> ChatScanner.replaceMessageIcons(message) };
 	}
 }

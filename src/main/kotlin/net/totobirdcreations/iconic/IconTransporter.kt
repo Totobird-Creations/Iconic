@@ -109,9 +109,8 @@ object IconTransporter {
 
 
     fun getFileNameParts(filename : String, sep : String = ".") : Pair<String, String> {
-        val parts = filename.split(sep).toMutableList();
-        val ext   = parts.removeLast();
-        return Pair(parts.joinToString(sep), ext);
+        val parts = filename.split(sep);
+        return Pair(parts.subList(0, parts.size - 1).joinToString(sep), parts.last());
     }
 
 

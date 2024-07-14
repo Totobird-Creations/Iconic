@@ -66,6 +66,7 @@ abstract class ChatScreenMixin extends Screen {
     }
     @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;render(Lnet/minecraft/client/gui/DrawContext;IIF)V", shift = At.Shift.AFTER))
     private void renderIconsButtonBackground(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
+        assert this.client != null;
         context.fill(this.width - 14, this.height - 14, this.width - 2, this.height - 2, this.client.options.getTextBackgroundColor(Integer.MIN_VALUE));
         this.iconsButton.render(context, mouseX, mouseY, delta);
     }

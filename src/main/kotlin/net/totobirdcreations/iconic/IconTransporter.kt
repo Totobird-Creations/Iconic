@@ -108,6 +108,7 @@ object IconTransporter {
     }
 
 
+    @JvmStatic
     fun getFileNameParts(filename : String, sep : String = ".") : Pair<String, String> {
         val parts = filename.split(sep);
         return Pair(parts.subList(0, parts.size - 1).joinToString(sep), parts.last());

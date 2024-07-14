@@ -6,6 +6,7 @@ import net.minecraft.client.font.GlyphRenderer
 import net.minecraft.client.font.RenderableGlyph
 import net.minecraft.client.font.TextRenderer
 import net.minecraft.client.render.*
+import net.minecraft.text.ClickEvent
 import net.minecraft.text.HoverEvent
 import net.minecraft.text.Style
 import net.minecraft.text.Text
@@ -32,15 +33,15 @@ object IconRenderer {
     fun applyStyle(target : String, style : Style) : Style {
         val (name, id) = IconTransporter.getFileNameParts(target, ":");
         return style
+            .withFont(Identifier(Iconic.ID, id))
             .withHoverEvent(HoverEvent(HoverEvent.Action.SHOW_TEXT, run {
-                val text = Text.literal(name)
-                    .styled{ s -> s.withBold(true).withColor(Formatting.WHITE) }
-                    .append(Text.literal("\nIconic ${id}")
-                        .styled{ s -> s.withColor(Formatting.DARK_GRAY).withBold(false) }
-                    );
+                val text = Text.empty()
+                    .append(Text.literal(name                  ).styled{ s -> s.withBold(true).withColor(Formatting.WHITE) })
+                    .append(Text.literal("\nIconic ${id}"      ).styled{ s -> s.withColor(Formatting.DARK_GRAY) })
+                    .append(Text.literal("\n\nᴄʟɪᴄᴋ ᴛᴏ ᴇxᴘᴀɴᴅ" ).styled{ s -> s.withColor(Formatting.YELLOW) });
                 text
             }))
-            .withFont(Identifier(Iconic.ID, id));
+            .withClickEvent(ClickEvent(ClickEvent.Action.OPEN_URL, "${Iconic.ID}://${name}:${id}"));
     }
 
 
@@ -62,13 +63,20 @@ object IconRenderer {
             x : Float, y : Float,
             mat : Matrix4f,
             vcs : VertexConsumer,
-            r : Float, g: Float, b: Float, a : Float, l : Int
+            r : Float, g : Float, b : Float, a : Float, l : Int
+        ) { this.draw(x, y, 8.0f, 8.0f, mat, r, g, b, a); }
+
+        fun draw(
+            x : Float, y : Float,
+            w : Float, h : Float,
+            mat : Matrix4f,
+            r : Float, g : Float, b : Float, a : Float
         ) {
             val iconGlID = this.iconGlID ?: return;
             @Suppress("RemoveRedundantQualifierName")
             val frame = floor(IconRenderer.animTime % this.framesF);
-            val x1 = x + 8.0f;
-            val y1 = y + 8.0f;
+            val x1 = x + w;
+            val y1 = y + h;
             val z  = 0.0f;
             // Set up render system.
             RenderSystem.setShaderTexture(0, iconGlID);

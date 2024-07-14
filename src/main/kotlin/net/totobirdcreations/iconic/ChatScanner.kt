@@ -8,6 +8,8 @@ object ChatScanner {
     // Remove last char and add `?` after each char.
     private val POTENTIAL_OUTGOING_SUFFIX : String = OUTGOING_SUFFIX.substring(0, OUTGOING_SUFFIX.length - 1).map{ ch -> "${ch}?" }.joinToString();
 
+    private val VALID_FILE_NAME : Regex = Regex("^[A-Za-z0-9_-]+\\.png$");
+
     private val SUGGESTION_TRIGGER_PATTERN : Regex = Regex("^.*${OUTGOING_PREFIX}((?:(?!${OUTGOING_SUFFIX})[A-Za-z0-9_-])*)${POTENTIAL_OUTGOING_SUFFIX}$");
     @JvmStatic
     fun findSuggestionPrefix(message : String) : String? {
@@ -16,11 +18,12 @@ object ChatScanner {
     @JvmStatic
     fun getSuggestions(prefix : String) : List<String> {
         return IconCache.LOCAL_ICONS_PATH.listFiles{ file ->
+            if (! (file.isFile
+                        && VALID_FILE_NAME.matches(file.name)
+                        && (prefix.isEmpty() || file.nameWithoutExtension.contains(prefix))
+            )) { return@listFiles false; }
             val image = IconCache.loadLocalIcon(file);
-            file.isFile
-                    && image != null && IconCache.validateIcon(image).isSuccess
-                    && (prefix.isEmpty() || file.nameWithoutExtension.contains(prefix))
-                    && file.extension == "png"
+            return@listFiles (image != null && IconCache.validateIcon(image).isSuccess);
         }?.map{ file -> file.nameWithoutExtension }
             ?: listOf();
     }
@@ -46,17 +49,6 @@ object ChatScanner {
             if (msg1.length > 256) { break; }
             msg = msg1;
         }
-        /*var msg = message;
-        for (i in transportIds.indices) {
-            val transportId = transportIds[i];
-            if (transportId != null) {
-                val match = matches[i];
-                val name = match.groups[1]!!.value;
-                val msg1 = msg.replaceRange((match.range.first - (message.length - msg.length))..(match.range.last - (message.length - msg.length)), "<:${name}:${transportId}:>");
-                if (msg1.length > 256) { break; }
-                msg = msg1;
-            }
-        }*/
         return msg;
     }
 

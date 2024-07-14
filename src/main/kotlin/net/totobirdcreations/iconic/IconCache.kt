@@ -1,5 +1,6 @@
 package net.totobirdcreations.iconic
 
+import com.mojang.blaze3d.platform.GlStateManager
 import com.mojang.blaze3d.platform.TextureUtil
 import com.mojang.blaze3d.systems.RenderSystem
 import net.minecraft.client.MinecraftClient
@@ -10,7 +11,12 @@ import java.io.File
 import java.io.InputStream
 
 
-private typealias RemoteIcon = Triple<IconFontStorage?, IconRenderer.IconGlyphRenderer, IconRenderer.IconGlyph>;
+private typealias RemoteIcon = Quadruple<
+        IconFontStorage?,
+        IconRenderer.IconGlyphRenderer,
+        IconRenderer.IconGlyph,
+        NativeImage
+>;
 
 
 object IconCache {
@@ -35,7 +41,7 @@ object IconCache {
      * Displayed while the icon is being downloaded.
      */
     private var loadingIcon : RemoteIcon? = null;
-    private fun getLoadingIcon() : RemoteIcon {
+    fun getLoadingIcon() : RemoteIcon {
         if (this.loadingIcon == null) {
             this.loadingIcon = this.loadGlyph(this.loadInternalIcon("loading")!!)
         }
@@ -45,11 +51,21 @@ object IconCache {
      * Displayed if the icon failed to download.
      */
     private var errorIcon : RemoteIcon? = null;
-    private fun getErrorIcon() : RemoteIcon {
+    fun getErrorIcon() : RemoteIcon {
         if (this.errorIcon == null) {
             this.errorIcon = this.loadGlyph(this.loadInternalIcon("error")!!)
         }
         return this.errorIcon!!;
+    }
+    /**
+     * Displayed behind the texture in the expand screen.
+     */
+    private var gridIcon : RemoteIcon? = null;
+    fun getGridIcon() : RemoteIcon {
+        if (this.gridIcon == null) {
+            this.gridIcon = this.loadGlyph(this.loadInternalIcon("grid")!!)
+        }
+        return this.gridIcon!!;
     }
 
     //                                                  ,-Transport ID.
@@ -144,7 +160,7 @@ object IconCache {
             image.upload(0, 0, 0, true);
         }
         val glyph = IconRenderer.IconGlyph(renderer);
-        return RemoteIcon(null, renderer, glyph);
+        return RemoteIcon(null, renderer, glyph, image);
     }
 
 
@@ -184,6 +200,12 @@ object IconCache {
         return this.remoteIcons[transportId] ?: this.getErrorIcon();
     }
     /**
+     * Get an icon from the cache, returning the error icon if it is not cached.
+     */
+    fun getCachedRemoteIcon(transportId : String) : RemoteIcon {
+        return this.remoteIcons[transportId] ?: this.getErrorIcon();
+    }
+    /**
      * Gets an icon's font storage from cache.
      */
     @JvmStatic
@@ -191,9 +213,33 @@ object IconCache {
         val cri = this.getCachedRemoteIconOrDownload(transportId);
         if (cri.first != null) { return cri.first!!; } else {
             val ifs = IconFontStorage(cri.second, cri.third, defaultFont);
-            this.remoteIcons[transportId] = RemoteIcon(ifs, cri.second, cri.third);
+            this.remoteIcons[transportId] = RemoteIcon(ifs, cri.second, cri.third, cri.fourth);
             return ifs;
         }
+    }
+
+    /**
+     * Copies a remote icon to the local icon directory.
+     */
+    fun copyRemoteIconToLocal(transportId : String, name : String) : File? {
+        val icon = this.getCachedRemoteIcon(transportId);
+        var file = this.LOCAL_ICONS_PATH.resolve("${name}.png");
+        var i = 0;
+        while (file.exists()) {
+            file = this.LOCAL_ICONS_PATH.resolve("${name}${i}.png");
+            i += 1;
+        }
+        try {
+            GlStateManager._bindTexture(icon.second.iconGlID!!);
+            val image = NativeImage(icon.fourth.width, icon.fourth.height, false);
+            image.loadFromTextureImage(0, false);
+            image.writeTo(file);
+            image.close();
+        } catch (e : Exception) {
+            Iconic.LOGGER.error("Failed to copy icon `${name}`: ${e.message}.");
+            return null;
+        }
+        return file;
     }
 
     private val downloaderThreads : MutableList<Thread> = mutableListOf();
@@ -259,6 +305,7 @@ object IconCache {
             if (remoteIcon != null) {
                 val glID = remoteIcon.second.iconGlID ?: continue;
                 TextureUtil.releaseTextureId(glID);
+                remoteIcon.fourth.close();
             }
         }
         this.remoteIcons.clear();

@@ -33,6 +33,7 @@ object IconRenderer {
     fun applyStyle(target : String, style : Style) : Style {
         val (name, id) = IconTransporter.getFileNameParts(target, ":");
         return style
+            .withColor(Formatting.WHITE)
             .withFont(Identifier(Iconic.ID, id))
             .withHoverEvent(HoverEvent(HoverEvent.Action.SHOW_TEXT, run {
                 val text = Text.empty()

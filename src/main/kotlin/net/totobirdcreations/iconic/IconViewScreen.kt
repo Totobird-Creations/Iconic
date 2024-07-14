@@ -28,7 +28,7 @@ class IconViewScreen(private val transportId : String, private val name : String
     override fun init() {
         if (this.nameTextWidget == null) {
             this.nameTextWidget = TextWidget(Text.empty()
-                .append(Text.literal(this.name).styled{ s -> s.withBold(true).withColor(Formatting.WHITE) }),
+                .append(Text.literal(this.name).styled{ s -> s.withBold(true).withUnderline(true).withColor(Formatting.WHITE) }),
                 this.textRenderer
             )
             this.transportIdTextWidget = TextWidget(Text.empty()

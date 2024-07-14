@@ -31,7 +31,7 @@ abstract class ChatMessagesMixin {
             Style currentStyle = style;
             if (isIcon) {
                 currentStyle = IconRenderer.applyStyle(component, currentStyle);
-                component = " ";
+                component = " ";
             }
             collector.add(StringVisitable.styled(getRenderedChatMessage(component), currentStyle));
             isIcon = ! isIcon;

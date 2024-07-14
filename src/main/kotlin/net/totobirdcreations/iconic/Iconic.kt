@@ -6,6 +6,7 @@ import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents
 import net.fabricmc.loader.api.FabricLoader
+import net.minecraft.client.MinecraftClient
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.BufferedReader
@@ -38,7 +39,15 @@ object Iconic : ClientModInitializer {
 		ClientPlayConnectionEvents.INIT.register{ _, _ -> IconCache.openThreads(); }
 		ClientPlayConnectionEvents.DISCONNECT.register{ _, _ -> IconCache.closeThreads(); IconCache.invalidate(); }
 
-		ClientSendMessageEvents.MODIFY_CHAT    .register{ message -> ChatScanner.replaceMessageIcons(message) };
-		ClientSendMessageEvents.MODIFY_COMMAND .register{ message -> ChatScanner.replaceMessageIcons(message) };
+		ClientSendMessageEvents.ALLOW_CHAT.register{ message -> ChatScanner.interceptOutgoingMessage(message){ msg ->
+			MinecraftClient.getInstance().player?.networkHandler?.sendChatMessage(msg);
+		} };
+		ClientSendMessageEvents.ALLOW_COMMAND.register{ message ->
+			if (ChatScanner.isInterceptableCommand(message)) {
+				ChatScanner.interceptOutgoingMessage(message){ msg ->
+					MinecraftClient.getInstance().player?.networkHandler?.sendChatCommand(msg);
+				}
+			} else { true }
+		};
 	}
 }

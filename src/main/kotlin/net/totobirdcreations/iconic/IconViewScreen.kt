@@ -8,6 +8,7 @@ import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 import kotlin.math.min
 
+
 class IconViewScreen(private val transportId : String, private val name : String) : Screen(Text.literal("View Icon")) {
     companion object {
         private val DOWNLOAD_TEXT = Text.literal("ᴅᴏᴡɴʟᴏᴀᴅ").styled{ s -> s.withColor(Formatting.YELLOW) };

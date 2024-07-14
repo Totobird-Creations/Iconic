@@ -1,5 +1,7 @@
 package net.totobirdcreations.iconic
 
+import net.minecraft.client.MinecraftClient
+
 object ChatScanner {
 
     private const val OUTGOING_PREFIX : String = "<:";
@@ -13,6 +15,7 @@ object ChatScanner {
     private val SUGGESTION_TRIGGER_PATTERN : Regex = Regex("^.*${OUTGOING_PREFIX}((?:(?!${OUTGOING_SUFFIX})[A-Za-z0-9_-])*)${POTENTIAL_OUTGOING_SUFFIX}$");
     @JvmStatic
     fun findSuggestionPrefix(message : String) : String? {
+        if (message.startsWith("/") && (! this.isInterceptableCommand(message.substring(1)))) { return null; }
         return SUGGESTION_TRIGGER_PATTERN.find(message)?.groups?.get(1)?.value;
     }
     @JvmStatic
@@ -30,7 +33,36 @@ object ChatScanner {
 
 
     private val OUTGOING_ICON_PATTERN : Regex = Regex("${OUTGOING_PREFIX}([A-Za-z0-9_-]+)${OUTGOING_SUFFIX}");
-    fun replaceMessageIcons(message : String) : String {
+
+    private var alreadyIntercepted : Boolean = false;
+    fun interceptOutgoingMessage(message : String, callback : (String) -> Unit) : Boolean {
+        if ((! (this.alreadyIntercepted)) && OUTGOING_ICON_PATTERN.containsMatchIn(message)) {
+            Thread{ ->
+                val msg = this.replaceMessageIcons(message);
+                this.alreadyIntercepted = true;
+                callback(msg);
+                this.alreadyIntercepted = false;
+            }.start();
+            return false;
+        }
+        return true;
+    }
+
+    fun isInterceptableCommand(message : String) : Boolean {
+        return     message.startsWith("me ")
+                || message.startsWith("msg ")
+                || message.startsWith("teammsg ")
+                || message.startsWith("tell ")
+                || message.startsWith("tellraw ")
+                || message.startsWith("tm ")
+                || message.startsWith("w ")
+                || message.startsWith("reply ")
+                || message.startsWith("r ")
+                || message.startsWith("last ")
+                || message.startsWith("l ");
+    }
+
+    private fun replaceMessageIcons(message : String) : String {
         val matches = OUTGOING_ICON_PATTERN.findAll(message).toList();
         val iconNames = matches.map{ match -> match.groups[1]!!.value }.toSet();
         val threads      = Array<Thread?>(iconNames.size){ _ -> null };

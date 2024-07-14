@@ -1,0 +1,17 @@
+accessWidener v1 named
+
+accessible class net/minecraft/client/font/FontStorage$GlyphPair
+accessible method net/minecraft/client/font/FontStorage findGlyph (I)Lnet/minecraft/client/font/FontStorage$GlyphPair;
+extendable method net/minecraft/client/font/FontStorage findGlyph (I)Lnet/minecraft/client/font/FontStorage$GlyphPair;
+accessible method net/minecraft/client/font/FontStorage getGlyph (IZ)Lnet/minecraft/client/font/Glyph;
+extendable method net/minecraft/client/font/FontStorage getGlyph (IZ)Lnet/minecraft/client/font/Glyph;
+accessible method net/minecraft/client/font/FontStorage findGlyphRenderer (I)Lnet/minecraft/client/font/GlyphRenderer;
+extendable method net/minecraft/client/font/FontStorage findGlyphRenderer (I)Lnet/minecraft/client/font/GlyphRenderer;
+accessible method net/minecraft/client/font/FontStorage getGlyphRenderer (Lnet/minecraft/client/font/RenderableGlyph;)Lnet/minecraft/client/font/GlyphRenderer;
+extendable method net/minecraft/client/font/FontStorage getGlyphRenderer (Lnet/minecraft/client/font/RenderableGlyph;)Lnet/minecraft/client/font/GlyphRenderer;
+accessible method net/minecraft/client/font/FontStorage$GlyphPair <init> (Lnet/minecraft/client/font/Glyph;Lnet/minecraft/client/font/Glyph;)V
+accessible field net/minecraft/client/font/FontStorage textureManager Lnet/minecraft/client/texture/TextureManager;
+accessible field net/minecraft/client/font/FontStorage charactersByWidth Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;
+accessible field net/minecraft/client/font/FontStorage RANDOM Lnet/minecraft/util/math/random/Random;
+accessible field net/minecraft/client/font/FontStorage blankGlyphRenderer Lnet/minecraft/client/font/GlyphRenderer;
+accessible field net/minecraft/client/font/FontStorage whiteRectangleGlyphRenderer Lnet/minecraft/client/font/GlyphRenderer;

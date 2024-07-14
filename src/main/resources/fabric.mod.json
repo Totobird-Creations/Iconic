@@ -1,0 +1,44 @@
+{
+	"schemaVersion": 1,
+	"id": "iconic",
+	"version": "${version}",
+	"name": "Iconic",
+	"description": "Upload your own icons to chat, fully client side!",
+	"authors": [
+		{
+			"name": "Totobird Creations",
+			"contact": {
+				"homepage": "https://github.com/Totobird-Creations"
+			}
+		},
+		"Totobird-Creations"
+	],
+	"contact": {
+		"homepage" : "https://github.com/Totobird-Creations/Iconic",
+		"sources"  : "https://github.com/Totobird-Creations/Iconic",
+		"issues"   : "https://github.com/Totobird-Creations/Iconic/issues"
+	},
+	"license": "GPL-2.0-only",
+	"icon": "assets/iconic/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"client": [{
+			"value": "net.totobirdcreations.iconic.Iconic",
+			"adapter": "kotlin"
+		}]
+	},
+	"mixins": [
+		"iconic.mixins.json"
+	],
+	"accessWidener": "iconic.accesswidener",
+	"depends": {
+		"fabricloader"           : ">=0.15.11",
+		"minecraft"              : "~1.20.4",
+		"java"                   : ">=17",
+		"fabric-api"             : "*",
+		"fabric-language-kotlin" : "*"
+	},
+	"recommends": {
+		"nochatreports" : "*"
+	}
+}

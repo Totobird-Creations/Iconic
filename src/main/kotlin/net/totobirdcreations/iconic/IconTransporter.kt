@@ -16,8 +16,8 @@ object IconTransporter {
     private const val CHARSET : String = "UTF-8";
     private const val CRLF    : String = "\r\n";
 
-    const val MAX_BYTES : Int = MEGABYTE / 2; // 0.5 MiB
-    const val MAX_SIZE  : Int = 64;
+    const val MAX_BYTES : Int = MEGABYTE; // 0.5 MiB
+    const val MAX_SIZE  : Int = 256;
 
     private val DOWNLOAD_URL : Regex = Regex("^https:\\/\\/tmpfiles.org/([0-9]+)/.*$");
 
@@ -92,16 +92,25 @@ object IconTransporter {
             // Get response.
             val success = conn.responseCode == HttpURLConnection.HTTP_OK;
             val inStream = if (success) { conn.inputStream } else { conn.errorStream };
-            val data = inStream.readAllBytes();
-            if (! success) { return Result.failure(Exception("Failed to download file: `${data.decodeToString()}`")); };
+            val data = mutableListOf<Byte>();
+            while (true) {
+                val b = inStream.readNBytes(1);
+                if (b.isEmpty()) { break; }
+                if (data.size > MAX_BYTES) {
+                    inStream.close();
+                    conn.disconnect();
+                    return Result.failure(Exception("File too big."));
+                }
+                data.add(b[0]);
+            }
+            if (! success) { return Result.failure(Exception("Failed to download file: `${data.toByteArray().decodeToString()}`")); };
 
             // Close the connection.
             inStream.close();
             conn.disconnect();
 
             // Return response.
-            if (data.size > MAX_BYTES) { return Result.failure(Exception("File too big.")); }
-            return Result.success(data);
+            return Result.success(data.toByteArray());
         } catch (e : Exception) {
             return Result.failure(e);
         }

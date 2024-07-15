@@ -10,7 +10,7 @@ object ChatScanner {
 
     private val VALID_FILE_NAME : Regex = Regex("^[A-Za-z0-9_-]+\\.png$");
 
-    private val SUGGESTION_TRIGGER_PATTERN : Regex = Regex("^.*${OUTGOING_PREFIX}((?:(?!${OUTGOING_SUFFIX})[A-Za-z0-9_-])*)${POTENTIAL_OUTGOING_SUFFIX}$");
+    private val SUGGESTION_TRIGGER_PATTERN : Regex = Regex("^.*${OUTGOING_PREFIX}(#?(?:(?!${OUTGOING_SUFFIX})[A-Za-z0-9_-])*)${POTENTIAL_OUTGOING_SUFFIX}$");
     @JvmStatic
     fun findSuggestionPrefix(message : String) : String? {
         if (message.startsWith("/") && (! this.isInterceptableCommand(message.substring(1)))) { return null; }
@@ -18,7 +18,9 @@ object ChatScanner {
     }
     @JvmStatic
     fun getSuggestions(prefix : String) : List<String> {
-        return IconCache.LOCAL_ICONS_PATH.listFiles{ file ->
+        val files = mutableListOf<String>();
+        files.addAll(IconCache.getDefaultIconIconIds());
+        files.addAll(IconCache.LOCAL_ICONS_PATH.listFiles{ file ->
             if (! (file.isFile
                         && VALID_FILE_NAME.matches(file.name)
                         && (prefix.isEmpty() || file.nameWithoutExtension.contains(prefix))
@@ -26,11 +28,13 @@ object ChatScanner {
             val image = IconCache.loadLocalIcon(file);
             return@listFiles (image != null && IconCache.validateIcon(image.width).isSuccess);
         }?.map{ file -> file.nameWithoutExtension }
-            ?: listOf();
+            ?: listOf()
+        );
+        return files;
     }
 
 
-    private val OUTGOING_ICON_PATTERN : Regex = Regex("${OUTGOING_PREFIX}([A-Za-z0-9_-]+)${OUTGOING_SUFFIX}");
+    private val OUTGOING_ICON_PATTERN : Regex = Regex("${OUTGOING_PREFIX}(#?[A-Za-z0-9_-]+)${OUTGOING_SUFFIX}");
 
     private var alreadyIntercepted : Boolean = false;
     fun interceptOutgoingMessage(message : String, callback : (String) -> Unit) : Boolean {
@@ -82,7 +86,7 @@ object ChatScanner {
         return msg;
     }
 
-    private val INCOMING_ICON_PATTERN : Regex = Regex("<:([A-Za-z0-9_-]+:[0-9]+):>");
+    private val INCOMING_ICON_PATTERN : Regex = Regex("<:(#?[A-Za-z0-9_-]+:[0-9]+):>");
     @JvmStatic
     fun splitIcons(message : String) : List<String> {
         var len = 0;

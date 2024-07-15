@@ -8,9 +8,7 @@ import net.minecraft.client.font.FontStorage
 import net.minecraft.client.texture.NativeImage
 import net.totobirdcreations.iconic.generator.IconGenerator
 import java.awt.image.BufferedImage
-import java.io.ByteArrayInputStream
-import java.io.File
-import java.io.InputStream
+import java.io.*
 
 
 private typealias RemoteIcon = Quadruple<
@@ -39,7 +37,7 @@ object IconCache {
      * The path to the icon directory.
      */
     @JvmStatic
-    val LOCAL_ICONS_PATH : File = File(MinecraftClient.getInstance().runDirectory, Iconic.ID);
+    val LOCAL_ICONS_PATH : File = MinecraftClient.getInstance().runDirectory.resolve("icons");
 
     /**
      * Displayed while the icon is being downloaded.
@@ -71,6 +69,19 @@ object IconCache {
         }
         return this.gridIcon!!;
     }
+    /**
+     * IDs of all built in icons.
+     */
+    private var defaultIconIconIds : List<String>? = null;
+    fun getDefaultIconIconIds() : List<String> {
+        if (this.defaultIconIconIds == null) {
+            val ids = mutableListOf<String>();
+            val provided = BufferedReader(InputStreamReader(this::class.java.getResourceAsStream("/assets/${Iconic.ID}/${Iconic.ID}/default/.default")!!));
+            while (true) { ids.add("#${provided.readLine() ?: break}"); }
+            this.defaultIconIconIds = ids;
+        }
+        return this.defaultIconIconIds!!;
+    }
 
     //                                                  ,-Transport ID.
     //                                                  |       ,-Icon file load time.
@@ -82,7 +93,9 @@ object IconCache {
     /**
      * Get a transport ID for an icon from the icons directory by name, caching, reloading, uploading, etc as necessary.
      */
-    fun loadCacheTransportLocalIcon(name : String) : String? { return this.loadCacheTransportLocalIcon(LOCAL_ICONS_PATH.resolve("${name}.png")); }
+    fun loadCacheTransportLocalIcon(name : String) : String? {
+        return this.loadCacheTransportLocalIcon(LOCAL_ICONS_PATH.resolve("${name}.png"));
+    }
     /**
      * Get a transport ID for an icon from the icons directory by file, caching, reloading, uploading, etc as necessary.
      */
@@ -90,7 +103,7 @@ object IconCache {
         val cachedIcon = this.localIcons[file.path];
         var glyph : RemoteIcon? = null;
         if (cachedIcon != null) {
-            if (file.lastModified() < cachedIcon.second) { // File has not been modified.
+            if (file.name.startsWith("#") || file.lastModified() < cachedIcon.second) { // File has not been modified.
                 if (System.currentTimeMillis() < cachedIcon.third) { // Remote has not expired.
                     return cachedIcon.first;
                 } else {
@@ -116,7 +129,8 @@ object IconCache {
             }
             glyph = this.loadGlyph(icon);
         }
-        val transportId = IconTransporter.uploadIcon(file.name, file.inputStream().readAllBytes()).getOrElse{ e ->
+        val stream = if (file.name.startsWith("#")) { this.getInternalIconStream("default/${file.nameWithoutExtension.substring(1)}")!! } else { file.inputStream() };
+        val transportId = IconTransporter.uploadIcon(file.name, stream.readAllBytes()).getOrElse{ e ->
             Iconic.LOGGER.error("Icon `${file.nameWithoutExtension}` failed to upload: ${e.message}");
             return null;
         };
@@ -137,7 +151,8 @@ object IconCache {
      * Load an icon from resources in directory `assets/${ID}/${ID}`.
      */
     private fun loadInternalIcon(name : String) : NativeImage? {
-        return this.loadIcon(this.getInternalIconStream(name)!!);
+        val stream = this.getInternalIconStream(name) ?: return null;
+        return this.loadIcon(stream);
     }
     fun getInternalIconStream(name : String) : InputStream? {
         return this::class.java.getResourceAsStream("/assets/${Iconic.ID}/${Iconic.ID}/${name}.png");
@@ -150,7 +165,13 @@ object IconCache {
     /**
      * Load an icon from the icons directory by file.
      */
-    fun loadLocalIcon(file : File) : NativeImage? { return try { this.loadIcon(file.inputStream()) } catch (e : Exception) { null }; }
+    fun loadLocalIcon(file : File) : NativeImage? {
+        if (file.name.startsWith("#")) {
+            return this.loadInternalIcon("default/${file.nameWithoutExtension.substring(1)}");
+        } else {
+            return try { this.loadIcon(file.inputStream()) } catch (e : Exception) { null };
+        }
+    }
     /**
      * Load an icon from a bytearray.
      */

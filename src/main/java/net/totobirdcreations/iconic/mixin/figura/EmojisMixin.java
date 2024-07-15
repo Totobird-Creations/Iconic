@@ -12,6 +12,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+/**
+ * Prevents Figura from messing with Iconic icons, while still allowing Figura icons to function.
+ */
 
 @Mixin(Emojis.class)
 abstract class EmojisMixin {

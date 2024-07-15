@@ -29,14 +29,6 @@ object Iconic : ClientModInitializer {
 		if (! IconCache.LOCAL_ICONS_PATH.isDirectory) {
 			IconCache.LOCAL_ICONS_PATH.mkdirs();
 		}
-		// Move all default icons to icon directory.
-		val provided = BufferedReader(InputStreamReader(this::class.java.getResourceAsStream("/assets/${ID}/${ID}/default/default.txt")!!));
-		while (true) {
-			val name   = "${provided.readLine() ?: break}.png";
-			val stream = this::class.java.getResourceAsStream("/assets/${ID}/${ID}/default/${name}") ?: continue;
-			val path   = IconCache.LOCAL_ICONS_PATH.resolve(name);
-			if (! path.exists()) { Files.copy(stream, path.toPath()); }
-		}
 
 		IconGenerator.registerCommand();
 

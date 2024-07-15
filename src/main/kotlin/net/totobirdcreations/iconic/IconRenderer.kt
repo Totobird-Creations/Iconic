@@ -38,7 +38,9 @@ object IconRenderer {
             .withFont(Identifier(Iconic.ID, id))
             .withHoverEvent(HoverEvent(HoverEvent.Action.SHOW_TEXT, run {
                 val text = Text.empty()
-                    .append(Text.literal(name                  ).styled{ s -> s.withBold(true).withColor(Formatting.WHITE) })
+                    .append(Text.literal(name).styled{ s -> s.withBold(true).withUnderline(true).withColor(
+                        if (name.startsWith("#") && IconCache.getDefaultIconIconIds().contains(name)) { Formatting.LIGHT_PURPLE } else { Formatting.WHITE }
+                    ) })
                     .append(Text.literal("\nIconic ${id}"      ).styled{ s -> s.withColor(Formatting.DARK_GRAY) })
                     .append(Text.literal("\n\nᴄʟɪᴄᴋ ᴛᴏ ᴇxᴘᴀɴᴅ" ).styled{ s -> s.withColor(Formatting.YELLOW) });
                 text

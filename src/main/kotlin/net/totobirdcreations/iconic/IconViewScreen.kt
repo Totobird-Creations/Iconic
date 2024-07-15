@@ -11,12 +11,16 @@ import kotlin.math.min
 
 class IconViewScreen(private val transportId : String, private val name : String) : Screen(Text.literal("View Icon")) {
     companion object {
-        private val DOWNLOAD_TEXT = Text.literal("ᴅᴏᴡɴʟᴏᴀᴅ").styled{ s -> s.withColor(Formatting.YELLOW) };
+        private val DOWNLOAD_TEXT = Text.literal("ᴅᴏᴡɴʟᴏᴀᴅ"      ).styled{ s -> s.withColor(Formatting.YELLOW       ) };
+        private val DEFAULT_TEXT  = Text.literal("ʙᴜɪʟᴛ ɪɴ ɪᴄᴏɴ" ).styled{ s -> s.withColor(Formatting.LIGHT_PURPLE ) };
     }
 
-    private var nameTextWidget        : TextWidget?          = null;
-    private var transportIdTextWidget : TextWidget?          = null;
-    private var downloadButton        : PressableTextWidget? = null;
+    private var nameTextWidget        : TextWidget? = null;
+    private var transportIdTextWidget : TextWidget? = null;
+
+    private var downloadButton    : PressableTextWidget? = null;
+    private var defaultTextWidget : TextWidget?          = null;
+    private val downloadable      : Boolean              = ! (this.name.startsWith("#") && IconCache.getDefaultIconIconIds().contains(this.name));
 
     private val gridRenderer = IconCache.getGridIcon().second;
     private val iconRenderer = IconCache.getCachedRemoteIcon(this.transportId).second;
@@ -27,12 +31,12 @@ class IconViewScreen(private val transportId : String, private val name : String
 
     override fun init() {
         if (this.nameTextWidget == null) {
-            this.nameTextWidget = TextWidget(Text.empty()
-                .append(Text.literal(this.name).styled{ s -> s.withBold(true).withUnderline(true).withColor(Formatting.WHITE) }),
+            this.nameTextWidget = TextWidget(
+                Text.literal(this.name).styled{ s -> s.withBold(true).withUnderline(true).withColor(Formatting.WHITE) },
                 this.textRenderer
             )
-            this.transportIdTextWidget = TextWidget(Text.empty()
-                .append(Text.literal(this.transportId).styled{ s -> s.withColor(Formatting.DARK_GRAY) }),
+            this.transportIdTextWidget = TextWidget(
+                Text.literal(this.transportId).styled{ s -> s.withColor(Formatting.DARK_GRAY) },
                 this.textRenderer
             );
             this.downloadButton = PressableTextWidget(
@@ -48,6 +52,10 @@ class IconViewScreen(private val transportId : String, private val name : String
                 },
                 this.textRenderer
             );
+            this.defaultTextWidget = TextWidget(
+                DEFAULT_TEXT,
+                this.textRenderer
+            );
         }
 
         val minDim = min(this.width, this.height);
@@ -57,17 +65,17 @@ class IconViewScreen(private val transportId : String, private val name : String
 
         this.nameTextWidget        !!.setPosition(4, this.height - (2 + this.textRenderer.fontHeight) * 2 );
         this.transportIdTextWidget !!.setPosition(4, this.height - (2 + this.textRenderer.fontHeight)     );
-        
-        this.downloadButton!!.width  = this.textRenderer.getWidth(DOWNLOAD_TEXT);
-        this.downloadButton!!.height = this.textRenderer.fontHeight;
-        this.downloadButton!!.setPosition(
-            this.width / 2 - this.downloadButton!!.width / 2,
-            this.height / 2 + minDim / 4
-        );
-
         this.addDrawableChild(this.nameTextWidget        );
         this.addDrawableChild(this.transportIdTextWidget );
-        this.addDrawableChild(this.downloadButton        );
+
+        val target = (if (this.downloadable) { this.downloadButton } else { this.defaultTextWidget })!!;
+        target.width  = this.textRenderer.getWidth(target.message);
+        target.height = this.textRenderer.fontHeight;
+        target.setPosition(
+            this.width / 2 - target.width / 2,
+            this.height / 2 + minDim / 4
+        );
+        this.addDrawableChild(target);
     }
 
     override fun render(context : DrawContext, mouseX : Int, mouseY : Int,  delta: Float) {

@@ -16,6 +16,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+/**
+ * Adds a new click event open url protocol which opens the icon view menu.
+ */
+
 @Mixin(Screen.class)
 abstract class ScreenMixin {
 

@@ -7,6 +7,7 @@ import net.minecraft.client.MinecraftClient
 import net.minecraft.client.font.FontStorage
 import net.minecraft.client.texture.NativeImage
 import net.totobirdcreations.iconic.generator.IconGenerator
+import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.InputStream
@@ -21,6 +22,8 @@ private typealias RemoteIcon = Quadruple<
 
 
 object IconCache {
+
+    const val FORMAT : Int = BufferedImage.TYPE_4BYTE_ABGR;
 
 
     ///////////////////
@@ -42,7 +45,7 @@ object IconCache {
      * Displayed while the icon is being downloaded.
      */
     private var loadingIcon : RemoteIcon? = null;
-    fun getLoadingIcon() : RemoteIcon {
+    private fun getLoadingIcon() : RemoteIcon {
         if (this.loadingIcon == null) {
             this.loadingIcon = this.loadGlyph(this.loadInternalIcon("loading")!!)
         }
@@ -52,7 +55,7 @@ object IconCache {
      * Displayed if the icon failed to download.
      */
     private var errorIcon : RemoteIcon? = null;
-    fun getErrorIcon() : RemoteIcon {
+    private fun getErrorIcon() : RemoteIcon {
         if (this.errorIcon == null) {
             this.errorIcon = this.loadGlyph(this.loadInternalIcon("error")!!)
         }
@@ -106,7 +109,7 @@ object IconCache {
                 Iconic.LOGGER.error("Failed to load icon `${file.nameWithoutExtension}`: Could not create image.");
                 return null;
             }
-            val error = this.validateIcon(icon).exceptionOrNull();
+            val error = this.validateIcon(icon.width).exceptionOrNull();
             if (error != null) {
                 Iconic.LOGGER.error("Failed to load icon `${file.nameWithoutExtension}`: ${error.message}");
                 return null;
@@ -125,8 +128,8 @@ object IconCache {
     /**
      * Make sure that the icon is following all rules.
      */
-    fun validateIcon(data : NativeImage) : Result<Unit> {
-        if (data.width > IconTransporter.MAX_SIZE) { return Result.failure(Exception("Image width may not exceed ${IconTransporter.MAX_SIZE}.")); }
+    fun validateIcon(width : Int) : Result<Unit> {
+        if (width > IconTransporter.MAX_SIZE) { return Result.failure(Exception("Image width may not exceed ${IconTransporter.MAX_SIZE}.")); }
         return Result.success(Unit);
     }
 
@@ -286,7 +289,7 @@ object IconCache {
             val data = dataResult.getOrThrow();
             val icon = this.loadIcon(data);
             if (icon == null) { this.downloadError(transportId, "Invalid or corrupt image data"); continue; }
-            val error = this.validateIcon(icon).exceptionOrNull();
+            val error = this.validateIcon(icon.width).exceptionOrNull();
             if (error != null) { this.downloadError(transportId, error.message); continue; }
 
             Iconic.LOGGER.info("Icon `${transportId}` downloaded.");

@@ -54,7 +54,7 @@ object PetPetGenerator : IconGenerator() {
                 MinecraftClient.getInstance().player?.sendMessage(Text.literal("Warning: The resulting image is too large. Limiting to 100 frames.").formatted(Formatting.GOLD));
             }
         }, 100);
-        val image = BufferedImage(WIDTH, WIDTH * totalFrames, BufferedImage.TYPE_INT_ARGB);
+        val image = BufferedImage(WIDTH, WIDTH * totalFrames, IconCache.FORMAT);
 
         val fracFrames2 = ceil(FRAMESF / 2.0f);
         val g = image.createGraphics();

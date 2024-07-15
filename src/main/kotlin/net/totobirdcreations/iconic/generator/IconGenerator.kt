@@ -10,11 +10,13 @@ import net.minecraft.client.texture.NativeImage
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 import net.totobirdcreations.iconic.IconCache
+import net.totobirdcreations.iconic.IconTransporter
 import net.totobirdcreations.iconic.Iconic
 import java.awt.Image
 import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
+import kotlin.math.max
 
 
 typealias S = FabricClientCommandSource;
@@ -29,11 +31,12 @@ abstract class IconGenerator {
 
                 this.registerSubCommand(root, PlayerSkinGenerator);
                 this.registerSubCommand(root, PetPetGenerator);
+                this.registerSubCommand(root, UrlGenerator);
 
                 d.register(root);
             };
         }
-        fun registerSubCommand(root : LiteralArgumentBuilder<S>, generator : IconGenerator) {
+        private fun registerSubCommand(root : LiteralArgumentBuilder<S>, generator : IconGenerator) {
             val subRoot = literal(generator.name);
             generator.addArguments(subRoot);
             root.then(subRoot);
@@ -76,7 +79,7 @@ abstract class IconGenerator {
         }
 
         fun nativeToBuffered(native : NativeImage) : BufferedImage {
-            val buffered = BufferedImage(native.width, native.height, BufferedImage.TYPE_INT_ARGB);
+            val buffered = BufferedImage(native.width, native.height, IconCache.FORMAT);
             for (y in 0..<native.height) {
                 for (x in 0..<native.width) {
                     buffered.setRGB(x, y, native.getColor(x, y));
@@ -87,7 +90,7 @@ abstract class IconGenerator {
 
         fun imageToBuffered(image : Image) : BufferedImage {
             if (image is BufferedImage) { return image; }
-            val buffered = BufferedImage(image.getWidth(null), image.getHeight(null), BufferedImage.TYPE_INT_ARGB);
+            val buffered = BufferedImage(image.getWidth(null), image.getHeight(null), IconCache.FORMAT);
             val g = buffered.createGraphics();
             g.drawImage(image, 0, 0, null);
             g.dispose();
@@ -113,6 +116,27 @@ abstract class IconGenerator {
                 lcm += l;
             }
             return max;
+        }
+
+        fun correctSingleFrameImage(buffered : BufferedImage) : BufferedImage {
+            var image = buffered;
+            if (buffered.width > IconTransporter.MAX_SIZE) {
+                val height = (buffered.height * IconTransporter.MAX_SIZE) / buffered.width;
+                image = this.imageToBuffered(this.scaleBuffered(buffered,
+                    IconTransporter.MAX_SIZE, height
+                ));
+            }
+            if (image.width != image.height) {
+                val maxDim = max(image.width, image.height);
+                val final = BufferedImage(maxDim, maxDim, IconCache.FORMAT);
+                val x = final.width  / 2 - image.width  / 2;
+                val y = final.height / 2 - image.height / 2;
+                val g = buffered.createGraphics();
+                g.drawImage(image, x, y, null);
+                g.dispose();
+                return final;
+            }
+            return image;
         }
 
     }

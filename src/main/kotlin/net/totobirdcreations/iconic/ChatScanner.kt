@@ -24,7 +24,7 @@ object ChatScanner {
                         && (prefix.isEmpty() || file.nameWithoutExtension.contains(prefix))
             )) { return@listFiles false; }
             val image = IconCache.loadLocalIcon(file);
-            return@listFiles (image != null && IconCache.validateIcon(image).isSuccess);
+            return@listFiles (image != null && IconCache.validateIcon(image.width).isSuccess);
         }?.map{ file -> file.nameWithoutExtension }
             ?: listOf();
     }

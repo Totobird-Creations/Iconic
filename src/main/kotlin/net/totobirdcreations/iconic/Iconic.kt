@@ -3,10 +3,12 @@ package net.totobirdcreations.iconic
 import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.ModInitializer
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback
 import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents
 import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.client.MinecraftClient
+import net.totobirdcreations.iconic.generator.IconGenerator
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.BufferedReader
@@ -35,6 +37,8 @@ object Iconic : ClientModInitializer {
 			val path   = IconCache.LOCAL_ICONS_PATH.resolve(name);
 			if (! path.exists()) { Files.copy(stream, path.toPath()); }
 		}
+
+		IconGenerator.registerCommand();
 
 		ClientPlayConnectionEvents.INIT.register{ _, _ -> IconCache.openThreads(); }
 		ClientPlayConnectionEvents.DISCONNECT.register{ _, _ -> IconCache.closeThreads(); IconCache.invalidate(); }

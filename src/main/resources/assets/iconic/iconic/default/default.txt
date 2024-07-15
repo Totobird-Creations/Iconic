@@ -13,7 +13,6 @@ skull
 eyes
 missing
 catbop
-petpet
 minecraft
 wheeze
 cheese

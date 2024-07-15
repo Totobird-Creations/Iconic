@@ -40,9 +40,9 @@ class IconViewScreen(private val transportId : String, private val name : String
                 { _ ->
                     val path = IconCache.copyRemoteIconToLocal(this.transportId, this.name);
                     if (path == null) {
-                        this.client?.player?.sendMessage(Text.literal("Failed to download icon `${this.name}`.").styled{ s -> s.withColor(Formatting.RED) });
+                        this.client?.player?.sendMessage(Text.literal("Failed to clone icon `${this.name}`.").styled{ s -> s.withColor(Formatting.RED) });
                     } else {
-                        this.client?.player?.sendMessage(Text.literal("Downloaded icon `${this.name}` as `${path.nameWithoutExtension}`.").styled{ s -> s.withColor(Formatting.YELLOW) });
+                        this.client?.player?.sendMessage(Text.literal("Cloned icon `${this.name}` as `${path.nameWithoutExtension}`.").styled{ s -> s.withColor(Formatting.YELLOW) });
                     }
                     this.close();
                 },

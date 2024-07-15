@@ -34,6 +34,7 @@ object IconTransporter {
             // Set up the connection.
             val url = URI("https://tmpfiles.org/api/v1/upload").toURL();
             val conn = url.openConnection() as HttpURLConnection;
+            conn.requestMethod = "POST";
             conn.useCaches = false;
             conn.doOutput = true;
             conn.doInput = true;
@@ -58,7 +59,7 @@ object IconTransporter {
             writer.close();
 
             // Get response.
-            val success = conn.responseCode == HttpURLConnection.HTTP_OK;
+            val success = conn.responseCode >= HttpURLConnection.HTTP_OK || conn.responseCode < HttpURLConnection.HTTP_OK + 100;
             val inStream = if (success) { conn.inputStream } else { conn.errorStream };
             val response = JsonHelper.deserialize(inStream.readAllBytes().decodeToString(), true);
 
@@ -82,15 +83,21 @@ object IconTransporter {
 
 
     fun downloadIcon(transportId : String) : Result<ByteArray> {
+        return this.downloadIcon(URI("https://tmpfiles.org/dl/${transportId}/icon.dat"));
+    }
+    @OptIn(ExperimentalStdlibApi::class)
+    fun downloadIcon(uri : URI) : Result<ByteArray> {
         try {
             // Set up the connection.
-            val url = URI("https://tmpfiles.org/dl/${transportId}/icon.dat").toURL();
+            val url = uri.toURL();
             val conn = url.openConnection() as HttpURLConnection;
-            conn.useCaches = false;
+            conn.requestMethod = "GET";
             conn.doInput = true;
+            conn.setRequestProperty("Accept", "image/png");
+            conn.setRequestProperty("User-Agent", "IconicMC");
 
             // Get response.
-            val success = conn.responseCode == HttpURLConnection.HTTP_OK;
+            val success = conn.responseCode >= HttpURLConnection.HTTP_OK || conn.responseCode < HttpURLConnection.HTTP_OK + 100;
             val inStream = if (success) { conn.inputStream } else { conn.errorStream };
             val data = mutableListOf<Byte>();
             while (true) {

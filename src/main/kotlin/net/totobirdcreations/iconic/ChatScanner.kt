@@ -1,7 +1,5 @@
 package net.totobirdcreations.iconic
 
-import net.minecraft.client.MinecraftClient
-
 object ChatScanner {
 
     private const val OUTGOING_PREFIX : String = "<:";

@@ -6,6 +6,7 @@ import com.mojang.blaze3d.systems.RenderSystem
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.font.FontStorage
 import net.minecraft.client.texture.NativeImage
+import net.totobirdcreations.iconic.generator.IconGenerator
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.InputStream
@@ -133,9 +134,16 @@ object IconCache {
      * Load an icon from resources in directory `assets/${ID}/${ID}`.
      */
     private fun loadInternalIcon(name : String) : NativeImage? {
-        return this.loadIcon(this::class.java.getResourceAsStream("/assets/${Iconic.ID}/${Iconic.ID}/${name}.png")!!);
+        return this.loadIcon(this.getInternalIconStream(name)!!);
+    }
+    fun getInternalIconStream(name : String) : InputStream? {
+        return this::class.java.getResourceAsStream("/assets/${Iconic.ID}/${Iconic.ID}/${name}.png");
     }
 
+    /**
+     * Load an icon from the icons directory by name.
+     */
+    fun loadLocalIcon(name : String) : NativeImage? { return this.loadLocalIcon(LOCAL_ICONS_PATH.resolve(name)) }
     /**
      * Load an icon from the icons directory by file.
      */
@@ -158,7 +166,7 @@ object IconCache {
             renderer.iconGlID = glID;
             TextureUtil.prepareImage(glID, image.width, image.height);
             image.upload(0, 0, 0, true);
-        }
+        };
         val glyph = IconRenderer.IconGlyph(renderer);
         return RemoteIcon(null, renderer, glyph, image);
     }
@@ -211,7 +219,7 @@ object IconCache {
     @JvmStatic
     fun getRemoteFontStorage(transportId : String, defaultFont : FontStorage) : FontStorage {
         val cri = this.getCachedRemoteIconOrDownload(transportId);
-        if (cri.first != null) { return cri.first!!; } else {
+        if (cri.first != null) { return cri.first; } else {
             val ifs = IconFontStorage(cri.second, cri.third, defaultFont);
             this.remoteIcons[transportId] = RemoteIcon(ifs, cri.second, cri.third, cri.fourth);
             return ifs;
@@ -223,12 +231,7 @@ object IconCache {
      */
     fun copyRemoteIconToLocal(transportId : String, name : String) : File? {
         val icon = this.getCachedRemoteIcon(transportId);
-        var file = this.LOCAL_ICONS_PATH.resolve("${name}.png");
-        var i = 0;
-        while (file.exists()) {
-            file = this.LOCAL_ICONS_PATH.resolve("${name}${i}.png");
-            i += 1;
-        }
+        val file = IconGenerator.findSaveLocation(name);
         try {
             GlStateManager._bindTexture(icon.second.iconGlID!!);
             val image = NativeImage(icon.fourth.width, icon.fourth.height, false);

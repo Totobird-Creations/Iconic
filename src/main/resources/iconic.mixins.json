@@ -6,12 +6,16 @@
         "defaultRequire": 1
     },
     "client": [
+
         "ChatInputSuggestorMixin",
         "ChatMessagesMixin",
         "ChatScreenMixin",
         "FontStorageMixin",
         "MinecraftClientMixin",
         "ScreenMixin",
-        "TextRendererMixin"
+        "TextRendererMixin",
+
+        "figura.EmojisMixin"
+
     ]
 }

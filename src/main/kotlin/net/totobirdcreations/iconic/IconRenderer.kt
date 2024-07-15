@@ -34,6 +34,7 @@ object IconRenderer {
         val (name, id) = IconTransporter.getFileNameParts(target, ":");
         return style
             .withColor(Formatting.WHITE)
+            .withBold(false)
             .withFont(Identifier(Iconic.ID, id))
             .withHoverEvent(HoverEvent(HoverEvent.Action.SHOW_TEXT, run {
                 val text = Text.empty()

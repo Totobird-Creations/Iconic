@@ -1,28 +1,58 @@
 package net.totobirdcreations.iconic
 
+import net.totobirdcreations.iconic.figura.FiguraEmojisAccessor
+
+
 object ChatScanner {
 
-    private const val OUTGOING_PREFIX : String = "<:";
-    private const val OUTGOING_SUFFIX : String = ":>";
+    const val OUTGOING_PREFIX : String = ":";
+    const val OUTGOING_SUFFIX : String = ":";
 
-    // Remove last char and add `?` after each char.
-    private val POTENTIAL_OUTGOING_SUFFIX : String = OUTGOING_SUFFIX.substring(0, OUTGOING_SUFFIX.length - 1).map{ ch -> "${ch}?" }.joinToString();
+    private val VALID_FILE_NAME_PATTERN : Regex = Regex("^[A-Za-z0-9_-]+\\.png$");
+    private val VALID_ICON_CHARACTER_PREDICATE  = { ch : Char -> (ch in 'A'..'Z') || (ch in 'a'..'z') || (ch in '0'..'9') || (ch == '_') || (ch == '-') };
 
-    private val VALID_FILE_NAME : Regex = Regex("^[A-Za-z0-9_-]+\\.png$");
+    private val OUTGOING_ICON_PATTERN : Regex = Regex("${OUTGOING_PREFIX.map{ ch -> "\\${ch}" }}(#?[A-Za-z0-9_-]+)${OUTGOING_SUFFIX.map{ ch -> "\\${ch}" }}");
 
-    private val SUGGESTION_TRIGGER_PATTERN : Regex = Regex("^.*${OUTGOING_PREFIX}(#?(?:(?!${OUTGOING_SUFFIX})[A-Za-z0-9_-])*)${POTENTIAL_OUTGOING_SUFFIX}$");
     @JvmStatic
-    fun findSuggestionPrefix(message : String) : String? {
+    fun findSuggestionPrefix(message : String) : Pair<String, Int>? {
         if (message.startsWith("/") && (! this.isInterceptableCommand(message.substring(1)))) { return null; }
-        return SUGGESTION_TRIGGER_PATTERN.find(message)?.groups?.get(1)?.value;
+        var inIcon      = false;
+        val currentIcon = StringBuilder();
+        var i = 0;
+        var m = 0;
+        while (i < message.length) {
+            val ch = message[i];
+            if (! inIcon) { if (message.substring(i).startsWith(OUTGOING_PREFIX)) {
+                currentIcon.clear(); m = 0;
+                inIcon = true;
+                i += OUTGOING_PREFIX.length;
+                continue;
+            } } else {
+                if (currentIcon.isEmpty() && ch == '#') { currentIcon.append(ch); }
+                else if (ch != ':') {
+                    currentIcon.append(ch);
+                }
+                else {
+                    val remaining = message.substring(i);
+                    if (remaining.length < OUTGOING_SUFFIX.length
+                        && remaining == OUTGOING_SUFFIX.substring(0, remaining.length)
+                    ) { m = remaining.length; break; }
+                    inIcon = false;
+                }
+            }
+            i += 1;
+        }
+        return if (inIcon) { return Pair(currentIcon.toString(), currentIcon.length + m) } else { null };
     }
     @JvmStatic
-    fun getSuggestions(prefix : String) : List<String> {
-        val files = mutableListOf<String>();
-        files.addAll(IconCache.getDefaultIconIconIds());
+    fun getSuggestions(prefix : String) : Set<String> {
+        val files = mutableSetOf<String>();
+        for (name in IconCache.getDefaultIconIconIds()) { if (prefix.isEmpty() || name.contains(prefix)) {
+            files.add(name);
+        } }
         files.addAll(IconCache.LOCAL_ICONS_PATH.listFiles{ file ->
             if (! (file.isFile
-                        && VALID_FILE_NAME.matches(file.name)
+                        && VALID_FILE_NAME_PATTERN.matches(file.name)
                         && (prefix.isEmpty() || file.nameWithoutExtension.contains(prefix))
             )) { return@listFiles false; }
             val image = IconCache.loadLocalIcon(file);
@@ -30,11 +60,11 @@ object ChatScanner {
         }?.map{ file -> file.nameWithoutExtension }
             ?: listOf()
         );
+        files.addAll(FiguraEmojisAccessor.getEmojiNames()
+            .filter{ iconName -> prefix.isEmpty() || iconName.contains(prefix) }
+        );
         return files;
     }
-
-
-    private val OUTGOING_ICON_PATTERN : Regex = Regex("${OUTGOING_PREFIX}(#?[A-Za-z0-9_-]+)${OUTGOING_SUFFIX}");
 
     private var alreadyIntercepted : Boolean = false;
     fun interceptOutgoingMessage(message : String, callback : (String) -> Unit) : Boolean {

@@ -6,9 +6,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.ClickEvent;
 import net.minecraft.text.Style;
-import net.totobirdcreations.iconic.IconTransporter;
-import net.totobirdcreations.iconic.IconViewScreen;
-import net.totobirdcreations.iconic.Iconic;
+import net.totobirdcreations.iconic.*;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -32,8 +30,14 @@ abstract class ScreenMixin {
         if (uri.startsWith(prefix)) {
             String target = uri.substring(prefix.length());
             Pair<String, String> parts = IconTransporter.getFileNameParts(target, ":");
+            String name        = parts.component1();
+            String transportId = parts.component2();
             assert this.client != null;
-            this.client.setScreen(new IconViewScreen(parts.component2(), parts.component1()));
+            this.client.setScreen(new IconViewScreen(transportId, name,
+                    (! (name.startsWith("#") && IconCache.getDefaultIconIconIds().contains(name)))
+                            ? IconRenderer.IconNamespace.IconicBuiltin
+                            : IconRenderer.IconNamespace.Iconic
+            ));
             cir.setReturnValue(true);
         }
     }

@@ -73,6 +73,7 @@ object IconCache {
      * IDs of all built in icons.
      */
     private var defaultIconIconIds : List<String>? = null;
+    @JvmStatic
     fun getDefaultIconIconIds() : List<String> {
         if (this.defaultIconIconIds == null) {
             val ids = mutableListOf<String>();

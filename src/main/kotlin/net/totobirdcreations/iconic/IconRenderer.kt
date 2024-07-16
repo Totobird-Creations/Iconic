@@ -10,6 +10,7 @@ import net.minecraft.text.ClickEvent
 import net.minecraft.text.HoverEvent
 import net.minecraft.text.Style
 import net.minecraft.text.Text
+import net.minecraft.text.TextColor
 import net.minecraft.util.Formatting
 import net.minecraft.util.Identifier
 import org.joml.Matrix4f
@@ -36,16 +37,29 @@ object IconRenderer {
             .withColor(Formatting.WHITE)
             .withBold(false)
             .withFont(Identifier(Iconic.ID, id))
-            .withHoverEvent(HoverEvent(HoverEvent.Action.SHOW_TEXT, run {
-                val text = Text.empty()
-                    .append(Text.literal(name).styled{ s -> s.withBold(true).withUnderline(true).withColor(
-                        if (name.startsWith("#") && IconCache.getDefaultIconIconIds().contains(name)) { Formatting.LIGHT_PURPLE } else { Formatting.WHITE }
-                    ) })
-                    .append(Text.literal("\nIconic ${id}"      ).styled{ s -> s.withColor(Formatting.DARK_GRAY) })
-                    .append(Text.literal("\n\nᴄʟɪᴄᴋ ᴛᴏ ᴇxᴘᴀɴᴅ" ).styled{ s -> s.withColor(Formatting.YELLOW) });
-                text
-            }))
+            .withHoverEvent(HoverEvent(HoverEvent.Action.SHOW_TEXT, this.createStyleHoverEvent(
+                name, if (name.startsWith("#") && IconCache.getDefaultIconIconIds().contains(name)) { IconNamespace.IconicBuiltin } else { IconNamespace.Iconic }, id, true
+            )))
             .withClickEvent(ClickEvent(ClickEvent.Action.OPEN_URL, "${Iconic.ID}://${name}:${id}"));
+    }
+    enum class IconNamespace(
+        val display  : String,
+        val colour   : TextColor,
+        val viewText : String
+    ) {
+        Iconic        ("Iconic", TextColor.fromFormatting (Formatting.WHITE        )!! , ""              ),
+        IconicBuiltin ("Iconic", TextColor.fromFormatting (Formatting.LIGHT_PURPLE )!! , "ʙᴜɪʟᴛ ɪɴ ɪᴄᴏɴ" ),
+        Figura        ("Figura", TextColor.fromRgb        (0x32b4ff                )   , "")
+    }
+    @JvmStatic
+    fun createStyleHoverEvent(name : String, namespace : IconNamespace, id : String, expand : Boolean) : Text {
+        val text = Text.empty()
+            .append(Text.literal(name).styled{ s -> s.withBold(true).withUnderline(true).withColor(namespace.colour) })
+            .append(Text.literal("\n${namespace.display} ${id}" ).styled{ s -> s.withColor(Formatting.DARK_GRAY) })
+        if (expand) {
+            text.append(Text.literal("\n\nᴄʟɪᴄᴋ ᴛᴏ ᴇxᴘᴀɴᴅ"  ).styled{ s -> s.withColor(Formatting.YELLOW) });
+        }
+        return text;
     }
 
 

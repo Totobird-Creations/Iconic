@@ -15,7 +15,8 @@
         "ScreenMixin",
         "TextRendererMixin",
 
-        "figura.EmojisMixin"
+        "figura.FiguraEmojiContainerMixin",
+        "figura.FiguraEmojisMixin"
 
     ]
 }

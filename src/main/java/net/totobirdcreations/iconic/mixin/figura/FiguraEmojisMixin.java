@@ -17,14 +17,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  */
 
 @Mixin(Emojis.class)
-abstract class EmojisMixin {
+abstract class FiguraEmojisMixin {
 
-    @Shadow
+    @Shadow(remap = false)
     private static MutableText convertEmoji(String string, Style style) { throw new AssertionError(); }
 
-    @Unique private static boolean alreadyHandling = false;
 
-    @Inject(method = "convertEmoji", at = @At("HEAD"), cancellable = true)
+    @Unique private static boolean alreadyHandling = false;
+    @Inject(method = "convertEmoji", at = @At("HEAD"), remap = false, cancellable = true)
     private static void disableFiguraEmojis(String message, Style style, CallbackInfoReturnable<MutableText> cir) {
         if (! alreadyHandling) {
             MutableText text = Text.empty();

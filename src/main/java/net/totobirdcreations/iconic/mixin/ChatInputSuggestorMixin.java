@@ -4,9 +4,11 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.brigadier.context.StringRange;
 import com.mojang.brigadier.suggestion.Suggestion;
 import com.mojang.brigadier.suggestion.Suggestions;
+import kotlin.Pair;
 import net.minecraft.client.gui.screen.ChatInputSuggestor;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.totobirdcreations.iconic.ChatScanner;
+import net.totobirdcreations.iconic.Iconic;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -37,13 +39,15 @@ abstract class ChatInputSuggestorMixin {
         int cursor = this.textField.getCursor();
         if (cursor == 0) { return; }
         String before = string.substring(0, cursor);
-        String prefix = ChatScanner.findSuggestionPrefix(string);
+        Pair<String, Integer> prefix = ChatScanner.findSuggestionPrefix(string);
         if (prefix != null) {
+            String  prefixWord = prefix.component1();
+            Integer prefixLen  = prefix.component2();
             this.pendingSuggestions = CompletableFuture.supplyAsync(() -> {
-                StringRange range = StringRange.between(before.length() - prefix.length() - 2, before.length());
+                StringRange range = StringRange.between(before.length() - prefixLen - ChatScanner.OUTGOING_PREFIX.length(), before.length());
                 ArrayList<Suggestion> suggestions = new ArrayList<>();
-                for (String suggestion : ChatScanner.getSuggestions(prefix)) {
-                    suggestions.add(new Suggestion(range, "<:" + suggestion + ":>"));
+                for (String suggestion : ChatScanner.getSuggestions(prefixWord)) {
+                    suggestions.add(new Suggestion(range, ChatScanner.OUTGOING_PREFIX + suggestion + ChatScanner.OUTGOING_SUFFIX));
                 }
                 return Suggestions.create(string, suggestions);
             });

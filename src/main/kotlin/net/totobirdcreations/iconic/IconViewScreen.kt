@@ -9,18 +9,21 @@ import net.minecraft.util.Formatting
 import kotlin.math.min
 
 
-class IconViewScreen(private val transportId : String, private val name : String) : Screen(Text.literal("View Icon")) {
+class IconViewScreen(
+    private val transportId : String,
+    private val name        : String,
+    private val namespace   : IconRenderer.IconNamespace
+) : Screen(Text.literal("View Icon")) {
     companion object {
-        private val DOWNLOAD_TEXT = Text.literal("ᴅᴏᴡɴʟᴏᴀᴅ"      ).styled{ s -> s.withColor(Formatting.YELLOW       ) };
-        private val DEFAULT_TEXT  = Text.literal("ʙᴜɪʟᴛ ɪɴ ɪᴄᴏɴ" ).styled{ s -> s.withColor(Formatting.LIGHT_PURPLE ) };
+        private val DOWNLOAD_TEXT = Text.literal("ᴅᴏᴡɴʟᴏᴀᴅ").styled{ s -> s.withColor(Formatting.YELLOW) };
     }
 
     private var nameTextWidget        : TextWidget? = null;
     private var transportIdTextWidget : TextWidget? = null;
 
-    private var downloadButton    : PressableTextWidget? = null;
-    private var defaultTextWidget : TextWidget?          = null;
-    private val downloadable      : Boolean              = ! (this.name.startsWith("#") && IconCache.getDefaultIconIconIds().contains(this.name));
+    private var downloadButton      : PressableTextWidget? = null;
+    private var namespaceTextWidget : TextWidget?          = null;
+    private val downloadable        : Boolean              = this.namespace == IconRenderer.IconNamespace.Iconic;
 
     private val gridRenderer = IconCache.getGridIcon().second;
     private val iconRenderer = IconCache.getCachedRemoteIcon(this.transportId).second;
@@ -52,8 +55,8 @@ class IconViewScreen(private val transportId : String, private val name : String
                 },
                 this.textRenderer
             );
-            this.defaultTextWidget = TextWidget(
-                DEFAULT_TEXT,
+            this.namespaceTextWidget = TextWidget(
+                Text.literal(this.namespace.viewText).styled{ s -> s.withColor(this.namespace.colour) },
                 this.textRenderer
             );
         }
@@ -68,7 +71,7 @@ class IconViewScreen(private val transportId : String, private val name : String
         this.addDrawableChild(this.nameTextWidget        );
         this.addDrawableChild(this.transportIdTextWidget );
 
-        val target = (if (this.downloadable) { this.downloadButton } else { this.defaultTextWidget })!!;
+        val target = (if (this.downloadable) { this.downloadButton } else { this.namespaceTextWidget })!!;
         target.width  = this.textRenderer.getWidth(target.message);
         target.height = this.textRenderer.fontHeight;
         target.setPosition(

@@ -1,5 +1,6 @@
 package net.totobirdcreations.iconic
 
+import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.client.MinecraftClient
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
@@ -12,9 +13,6 @@ object ChatScanner {
     const val OUTGOING_SUFFIX : String = ":";
 
     private val VALID_FILE_NAME_PATTERN : Regex = Regex("^[A-Za-z0-9_-]+\\.png$");
-    private val VALID_ICON_CHARACTER_PREDICATE  = { ch : Char -> (ch in 'A'..'Z') || (ch in 'a'..'z') || (ch in '0'..'9') || (ch == '_') || (ch == '-') };
-
-    private val OUTGOING_ICON_PATTERN : Regex = Regex("${OUTGOING_PREFIX.map{ ch -> "\\${ch}" }}(#?[A-Za-z0-9_-]+)${OUTGOING_SUFFIX.map{ ch -> "\\${ch}" }}");
 
     @JvmStatic
     fun findSuggestionPrefix(message : String) : Pair<String, Int>? {
@@ -23,24 +21,29 @@ object ChatScanner {
         val currentIcon = StringBuilder();
         var i = 0;
         var m = 0;
+        var escape = false;
         while (i < message.length) {
             val ch = message[i];
-            if (! inIcon) { if (message.substring(i).startsWith(OUTGOING_PREFIX)) {
+            if (! escape && ch == '\\') { escape = true; }
+            else if (escape) { currentIcon.append(ch); escape = false; }
+            else if (! inIcon) { if (message.substring(i).startsWith(OUTGOING_PREFIX)) {
                 currentIcon.clear(); m = 0;
                 inIcon = true;
                 i += OUTGOING_PREFIX.length;
                 continue;
             } } else {
                 if (currentIcon.isEmpty() && ch == '#') { currentIcon.append(ch); }
-                else if (ch != ':') {
-                    currentIcon.append(ch);
-                }
                 else {
                     val remaining = message.substring(i);
                     if (remaining.length < OUTGOING_SUFFIX.length
                         && remaining == OUTGOING_SUFFIX.substring(0, remaining.length)
                     ) { m = remaining.length; break; }
-                    inIcon = false;
+                    else if (remaining.startsWith(OUTGOING_SUFFIX)) {
+                        i += OUTGOING_SUFFIX.length;
+                        inIcon = false;
+                    } else {
+                        currentIcon.append(ch);
+                    }
                 }
             }
             i += 1;
@@ -73,7 +76,7 @@ object ChatScanner {
 
     private var alreadyIntercepted : Boolean = false;
     fun interceptOutgoingMessage(message : String, callback : (String) -> Unit) : Boolean {
-        if ((! (this.alreadyIntercepted)) && OUTGOING_ICON_PATTERN.containsMatchIn(message)) {
+        if (! this.alreadyIntercepted) {
             Thread{ ->
                 val msg = this.replaceMessageIcons(message) ?: return@Thread;
                 this.alreadyIntercepted = true;
@@ -99,7 +102,7 @@ object ChatScanner {
                 || message.startsWith("l ");
     }
 
-    private fun replaceMessageIcons(message : String) : String? {
+    /*private fun replaceMessageIcons(message : String) : String? {
         val matches = OUTGOING_ICON_PATTERN.findAll(message).toList();
         val iconNames = matches.map{ match -> match.groups[1]!!.value }.toSet();
         val threads      = Array<Thread?>(iconNames.size){ _ -> null };
@@ -122,6 +125,79 @@ object ChatScanner {
             return null;
         }
         return msg;
+    }*/
+    private fun replaceMessageIcons(message : String) : String? {
+        val iconNames = mutableMapOf<String, Pair<String?, MutableList<Int>>>();
+
+        // Find icon locations.
+        var msg = StringBuilder();
+        var inIcon      = false;
+        val currentIcon = StringBuilder();
+        var i = 0;
+        var escape = false;
+        while (i < message.length) {
+            val ch = message[i];
+            if (! escape && ch == '\\') { escape = true; }
+            else if (escape) {
+                if (ch == ':' && FabricLoader.getInstance().isModLoaded("figura")) {
+                    currentIcon.append('\\');
+                }
+                currentIcon.append(ch); escape = false;
+            }
+            else if (! inIcon) {
+                if (message.substring(i).startsWith(OUTGOING_PREFIX)) {
+                    msg.append(currentIcon.toString());
+                    currentIcon.clear();
+                    inIcon = true;
+                    i += OUTGOING_PREFIX.length;
+                    continue;
+                } else {
+                    currentIcon.append(ch);
+                }
+            } else {
+                val remaining = message.substring(i);
+                if (remaining.startsWith(OUTGOING_SUFFIX)) {
+                    iconNames.getOrPut(currentIcon.toString()){ -> Pair(null, mutableListOf()) }.second.add(msg.length);
+                    currentIcon.clear();
+                    inIcon = false;
+                    i += OUTGOING_SUFFIX.length;
+                    continue;
+                }
+                currentIcon.append(ch);
+            }
+            i += 1;
+        }
+        if (inIcon) { msg.append(':'); }
+        msg.append(currentIcon.toString());
+
+
+        // Insert Iconic icons.
+        val replaceEntries = iconNames.entries;
+        val threads        = Array<Thread?>(iconNames.size){ _ -> null };
+        for ((i, e) in replaceEntries.withIndex()) {
+            val (name, v) = e;
+            val (_, indices) = v;
+            val thread = Thread{ -> iconNames[name] = Pair(IconCache.loadCacheTransportLocalIcon(name) ?: return@Thread, indices); };
+            threads[i] = thread; thread.start();
+        }
+        for (thread in threads) { thread!!.join(); }
+
+        val msg0 = "${msg}";
+        for ((name, v) in replaceEntries) {
+            val (transportId, indices) = v;
+            for (index in indices) {
+                msg.insert(index - (msg0.length - msg.length),
+                    if (transportId == null) { ":${name}:" }
+                    else { "<:${name}:${transportId}:>" }
+                );
+            }
+        }
+
+        if (msg.length > 256) {
+            MinecraftClient.getInstance().player?.sendMessage(Text.literal("Resulting message is too long. Try removing some icons.").formatted(Formatting.GOLD));
+            return null;
+        }
+        return msg.toString();
     }
 
     private val INCOMING_ICON_PATTERN : Regex = Regex("<:(#?[A-Za-z0-9_-]+:[0-9]+):>");

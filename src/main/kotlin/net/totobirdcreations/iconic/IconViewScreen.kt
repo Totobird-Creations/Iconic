@@ -1,17 +1,21 @@
 package net.totobirdcreations.iconic
 
 import net.minecraft.client.MinecraftClient
+import net.minecraft.client.font.TextRenderer
 import net.minecraft.client.gui.DrawContext
-import net.minecraft.client.gui.screen.ChatScreen
 import net.minecraft.client.gui.screen.Screen
 import net.minecraft.client.gui.widget.PressableTextWidget
 import net.minecraft.client.gui.widget.TextWidget
+import net.minecraft.client.render.RenderLayer
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
+import net.minecraft.util.Identifier
+import kotlin.math.ceil
+import kotlin.math.floor
 import kotlin.math.min
 
 
-class IconViewScreen(
+open class IconViewScreen(
     private val transportId : String,
     private val name        : String,
     private val namespace   : IconRenderer.IconNamespace
@@ -26,7 +30,7 @@ class IconViewScreen(
 
     private var downloadButton      : PressableTextWidget? = null;
     private var namespaceTextWidget : TextWidget?          = null;
-    private val downloadable        : Boolean              = this.namespace != IconRenderer.IconNamespace.Iconic;
+    private val downloadable        : Boolean              = this.namespace == IconRenderer.IconNamespace.Iconic;
 
     private val gridRenderer = IconCache.getGridIcon().second;
     private val iconRenderer = IconCache.getCachedRemoteIcon(this.transportId).second;
@@ -38,11 +42,11 @@ class IconViewScreen(
     override fun init() {
         if (this.nameTextWidget == null) {
             this.nameTextWidget = TextWidget(
-                Text.literal(this.name).styled{ s -> s.withBold(true).withUnderline(true).withColor(Formatting.WHITE) },
+                Text.literal(this.name).styled{ s -> s.withBold(true).withUnderline(true).withColor(this.namespace.colour) },
                 this.textRenderer
             )
             this.transportIdTextWidget = TextWidget(
-                Text.literal(this.transportId).styled{ s -> s.withColor(Formatting.DARK_GRAY) },
+                Text.literal("${this.namespace.display} ${this.transportId}").styled{ s -> s.withColor(Formatting.DARK_GRAY) },
                 this.textRenderer
             );
             this.downloadButton = PressableTextWidget(
@@ -84,23 +88,60 @@ class IconViewScreen(
         this.addDrawableChild(target);
     }
 
-    override fun render(context : DrawContext, mouseX : Int, mouseY : Int,  delta: Float) {
-        super.render(context, mouseX, mouseY, delta);
+    protected fun renderGrid(context : DrawContext) {
         this.gridRenderer.draw(
             this.imageMinX, this.imageMinY, this.imageSize, this.imageSize,
             context.matrices.peek().positionMatrix,
             1.0f, 1.0f, 1.0f, 1.0f
         );
+    }
+    override fun render(context : DrawContext, mouseX : Int, mouseY : Int, delta : Float) {
+        super.render(context, mouseX, mouseY, delta);
+        this.renderGrid(context);
+        this.renderIcon(context, this.imageMinX, this.imageMinY, this.imageSize, delta);
+
+    }
+    open fun renderIcon(context : DrawContext, x : Float, y : Float, wh : Float, delta : Float) {
         this.iconRenderer.draw(
-            this.imageMinX, this.imageMinY, this.imageSize, this.imageSize,
+            x, y, wh, wh,
             context.matrices.peek().positionMatrix,
             1.0f, 1.0f, 1.0f, 1.0f
         );
     }
 
 
-    override fun shouldPause(): Boolean { return false; }
+    override fun shouldPause() : Boolean { return false; }
 
+    fun open() { MinecraftClient.getInstance().setScreen(this); }
     override fun close() { MinecraftClient.getInstance().setScreen(this.lastScreen); }
+
+
+    class Figura(
+                    name    : String,
+                    group   : String,
+        private val unicode : String,
+        private val font    : Identifier
+    ) : IconViewScreen(
+        group,
+        name,
+        IconRenderer.IconNamespace.Figura
+    ) {
+        private val icon : Text = Text.literal(this.unicode).styled{ s -> s.withFont(this.font) };
+
+        override fun renderIcon(context : DrawContext, x : Float, y : Float, wh : Float, delta : Float) {
+            context.matrices.push();
+            val h     = (this.textRenderer.fontHeight - 1).toFloat();
+            val scale = wh / h;
+            context.matrices.scale(scale, scale, 1.0f);
+            this.textRenderer.draw(this.icon,
+                x / scale, (y + (wh / h)) / scale,
+                0xffffff, false,
+                context.matrices.peek().positionMatrix, context.vertexConsumers,
+                TextRenderer.TextLayerType.NORMAL, 0, 0
+            );
+            context.matrices.pop();
+        }
+
+    }
 
 }

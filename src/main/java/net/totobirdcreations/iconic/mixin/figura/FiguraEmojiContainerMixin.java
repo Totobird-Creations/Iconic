@@ -3,6 +3,7 @@ package net.totobirdcreations.iconic.mixin.figura;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
+import net.minecraft.text.ClickEvent;
 import net.minecraft.text.HoverEvent;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
@@ -35,11 +36,18 @@ abstract class FiguraEmojiContainerMixin {
 
     @Unique
     private Text createComponent(String unicode, String key) {
-        return Text.literal(unicode).styled((s) -> s.withFont(this.font).withHoverEvent(
-                new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                        IconRenderer.createStyleHoverEvent(key, IconRenderer.IconNamespace.Figura, "emoji." + this.name + "." + key, false)
-                )
-        ));
+        return Text.literal(unicode).styled((s) -> s
+                .withFont(this.font)
+                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                        IconRenderer.createStyleHoverEvent(key, IconRenderer.IconNamespace.Figura, "emoji." + this.name + "." + key)
+                ))
+                .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL,
+                        "figura://" + this.font.toString() +
+                                ":" + unicode +
+                                ":emoji." + this.name + "." + key +
+                                ":" + key
+                ))
+        );
     }
 
 }

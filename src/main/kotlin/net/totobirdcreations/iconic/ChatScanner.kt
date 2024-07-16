@@ -24,27 +24,30 @@ object ChatScanner {
         var escape = false;
         while (i < message.length) {
             val ch = message[i];
-            if (! escape && ch == '\\') { escape = true; }
+            if ((! escape) && ch == '\\') { escape = true; }
             else if (escape) { currentIcon.append(ch); escape = false; }
-            else if (! inIcon) { if (message.substring(i).startsWith(OUTGOING_PREFIX)) {
-                currentIcon.clear(); m = 0;
-                inIcon = true;
-                i += OUTGOING_PREFIX.length;
-                continue;
-            } } else {
-                if (currentIcon.isEmpty() && ch == '#') { currentIcon.append(ch); }
-                else {
-                    val remaining = message.substring(i);
-                    if (remaining.length < OUTGOING_SUFFIX.length
-                        && remaining == OUTGOING_SUFFIX.substring(0, remaining.length)
-                    ) { m = remaining.length; break; }
-                    else if (remaining.startsWith(OUTGOING_SUFFIX)) {
-                        i += OUTGOING_SUFFIX.length;
-                        inIcon = false;
-                    } else {
-                        currentIcon.append(ch);
-                    }
+            else if (! inIcon) {
+                if (message.substring(i).startsWith(OUTGOING_PREFIX)) {
+                    currentIcon.clear();
+                    inIcon = true;
+                    i += OUTGOING_PREFIX.length;
+                    continue
                 }
+            }
+            else {
+                val remaining = message.substring(i);
+                if (remaining.length < OUTGOING_SUFFIX.length
+                    && remaining == OUTGOING_SUFFIX.substring(0, remaining.length)
+                ) {
+                    m = remaining.length;
+                    break;
+                }
+                if (remaining.startsWith(OUTGOING_SUFFIX)) {
+                    inIcon = false;
+                    i += OUTGOING_SUFFIX.length;
+                    continue;
+                }
+                currentIcon.append(ch);
             }
             i += 1;
         }
@@ -102,42 +105,18 @@ object ChatScanner {
                 || message.startsWith("l ");
     }
 
-    /*private fun replaceMessageIcons(message : String) : String? {
-        val matches = OUTGOING_ICON_PATTERN.findAll(message).toList();
-        val iconNames = matches.map{ match -> match.groups[1]!!.value }.toSet();
-        val threads      = Array<Thread?>(iconNames.size){ _ -> null };
-        val transportIds = mutableMapOf<String, String>();
-        for ((i, iconName) in iconNames.withIndex()) {
-            val thread = Thread{ -> transportIds[iconName] = IconCache.loadCacheTransportLocalIcon(iconName) ?: return@Thread; };
-            threads[i] = thread; thread.start();
-        }
-        for (thread in threads) { thread!!.join(); }
-
-        var msg = message;
-        for (match in matches) {
-            val name        = match.groups[1]!!.value;
-            val transportId = transportIds[name] ?: continue;
-            val msg1 = msg.replaceRange((match.range.first - (message.length - msg.length))..(match.range.last - (message.length - msg.length)), "<:${name}:${transportId}:>");
-            msg = msg1;
-        }
-        if (msg.length > 256) {
-            MinecraftClient.getInstance().player?.sendMessage(Text.literal("Resulting message is too long. Try removing some icons.").formatted(Formatting.GOLD));
-            return null;
-        }
-        return msg;
-    }*/
     private fun replaceMessageIcons(message : String) : String? {
         val iconNames = mutableMapOf<String, Pair<String?, MutableList<Int>>>();
 
         // Find icon locations.
-        var msg = StringBuilder();
+        val msg = StringBuilder();
         var inIcon      = false;
         val currentIcon = StringBuilder();
         var i = 0;
         var escape = false;
         while (i < message.length) {
             val ch = message[i];
-            if (! escape && ch == '\\') { escape = true; }
+            if ((! escape) && ch == '\\') { escape = true; }
             else if (escape) {
                 if (ch == ':' && FabricLoader.getInstance().isModLoaded("figura")) {
                     currentIcon.append('\\');
@@ -154,7 +133,8 @@ object ChatScanner {
                 } else {
                     currentIcon.append(ch);
                 }
-            } else {
+            }
+            else {
                 val remaining = message.substring(i);
                 if (remaining.startsWith(OUTGOING_SUFFIX)) {
                     iconNames.getOrPut(currentIcon.toString()){ -> Pair(null, mutableListOf()) }.second.add(msg.length);

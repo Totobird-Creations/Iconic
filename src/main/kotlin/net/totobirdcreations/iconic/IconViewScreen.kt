@@ -99,8 +99,8 @@ class IconViewScreen(
     }
 
 
-    override fun close() {
-        MinecraftClient.getInstance().setScreen(this.lastScreen);
-    }
+    override fun shouldPause(): Boolean { return false; }
+
+    override fun close() { MinecraftClient.getInstance().setScreen(this.lastScreen); }
 
 }

@@ -7,6 +7,7 @@ import net.minecraft.client.MinecraftClient
 import net.minecraft.client.font.FontStorage
 import net.minecraft.client.texture.NativeImage
 import net.totobirdcreations.iconic.generator.IconGenerator
+import org.lwjgl.opengl.GL11C.*
 import java.awt.image.BufferedImage
 import java.io.*
 
@@ -199,7 +200,13 @@ object IconCache {
             val glID : Int = TextureUtil.generateTextureId();
             renderer.iconGlID = glID;
             TextureUtil.prepareImage(glID, image.width, image.height);
-            image.upload(0, 0, 0, true);
+            image.upload(
+                0, 0, 0,
+                0, 0,
+                image.width, image.height,
+                false, true, true,
+                true
+            );
         };
         val glyph = IconRenderer.IconGlyph(renderer);
         return RemoteIcon(null, renderer, glyph, image);

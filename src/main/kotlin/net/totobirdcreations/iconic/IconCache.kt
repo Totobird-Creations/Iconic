@@ -118,16 +118,12 @@ object IconCache {
         // If the icon isn't cached or has been modified, get it.
         if (glyph == null) {
             Iconic.LOGGER.info("Icon `${file.nameWithoutExtension}` has not been cached. Reloading...");
-            val icon = this.loadLocalIcon(file);
+            var icon = this.loadLocalIcon(file);
             if (icon == null) {
                 Iconic.LOGGER.error("Failed to load icon `${file.nameWithoutExtension}`: Could not create image.");
                 return null;
             }
-            val error = this.validateIcon(icon.width).exceptionOrNull();
-            if (error != null) {
-                Iconic.LOGGER.error("Failed to load icon `${file.nameWithoutExtension}`: ${error.message}");
-                return null;
-            }
+            icon = this.correctIcon(icon);
             glyph = this.loadGlyph(icon);
         }
         val stream = if (file.name.startsWith("#")) { this.getInternalIconStream("default/${file.nameWithoutExtension.substring(1)}")!! } else { file.inputStream() };
@@ -141,11 +137,24 @@ object IconCache {
         return transportId;
     }
     /**
-     * Make sure that the icon is following all rules.
+     * Make sure that the icon is following all rules, correcting if needed.
      */
-    fun validateIcon(width : Int) : Result<Unit> {
-        if (width > IconTransporter.MAX_SIZE) { return Result.failure(Exception("Image width may not exceed ${IconTransporter.MAX_SIZE}.")); }
-        return Result.success(Unit);
+    private fun correctIcon(native : NativeImage) : NativeImage {
+        if (native.width > native.height) {
+            var buffered = IconGenerator.Util.nativeToBuffered(native);
+            buffered = IconGenerator.Util.correctSingleFrameImage(buffered);
+            return IconGenerator.Util.bufferedToNative(buffered);
+        } else if (native.width > IconTransporter.MAX_SIZE) {
+            var buffered = IconGenerator.Util.nativeToBuffered(native);
+            val height = (buffered.height * IconTransporter.MAX_SIZE) / buffered.width;
+            IconGenerator.Util.imageToBuffered(
+                IconGenerator.Util.scaleBuffered(buffered,
+                    IconTransporter.MAX_SIZE, height
+                )
+            );
+            return IconGenerator.Util.bufferedToNative(buffered);
+        }
+        return native;
     }
 
     /**
@@ -309,10 +318,9 @@ object IconCache {
             val dataResult = IconTransporter.downloadIcon(transportId);
             if (dataResult.isFailure) { this.downloadError(transportId, dataResult.exceptionOrNull()!!.message); continue; }
             val data = dataResult.getOrThrow();
-            val icon = this.loadIcon(data);
+            var icon = this.loadIcon(data);
             if (icon == null) { this.downloadError(transportId, "Invalid or corrupt image data"); continue; }
-            val error = this.validateIcon(icon.width).exceptionOrNull();
-            if (error != null) { this.downloadError(transportId, error.message); continue; }
+            icon = this.correctIcon(icon);
 
             Iconic.LOGGER.info("Icon `${transportId}` downloaded.");
             this.remoteIcons[transportId] = this.loadGlyph(icon);

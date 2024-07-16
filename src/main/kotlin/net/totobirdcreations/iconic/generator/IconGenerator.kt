@@ -129,9 +129,9 @@ abstract class IconGenerator {
             if (image.width != image.height) {
                 val maxDim = max(image.width, image.height);
                 val final = BufferedImage(maxDim, maxDim, IconCache.FORMAT);
-                val x = final.width  / 2 - image.width  / 2;
-                val y = final.height / 2 - image.height / 2;
-                val g = buffered.createGraphics();
+                val x = maxDim / 2 - image.width  / 2;
+                val y = maxDim / 2 - image.height / 2;
+                val g = final.createGraphics();
                 g.drawImage(image, x, y, null);
                 g.dispose();
                 return final;

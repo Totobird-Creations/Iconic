@@ -1,6 +1,8 @@
 package net.totobirdcreations.iconic
 
+import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
+import net.minecraft.client.gui.screen.ChatScreen
 import net.minecraft.client.gui.screen.Screen
 import net.minecraft.client.gui.widget.PressableTextWidget
 import net.minecraft.client.gui.widget.TextWidget
@@ -17,13 +19,14 @@ class IconViewScreen(
     companion object {
         private val DOWNLOAD_TEXT = Text.literal("ᴅᴏᴡɴʟᴏᴀᴅ").styled{ s -> s.withColor(Formatting.YELLOW) };
     }
+    private val lastScreen : Screen? = MinecraftClient.getInstance().currentScreen;
 
     private var nameTextWidget        : TextWidget? = null;
     private var transportIdTextWidget : TextWidget? = null;
 
     private var downloadButton      : PressableTextWidget? = null;
     private var namespaceTextWidget : TextWidget?          = null;
-    private val downloadable        : Boolean              = this.namespace == IconRenderer.IconNamespace.Iconic;
+    private val downloadable        : Boolean              = this.namespace != IconRenderer.IconNamespace.Iconic;
 
     private val gridRenderer = IconCache.getGridIcon().second;
     private val iconRenderer = IconCache.getCachedRemoteIcon(this.transportId).second;
@@ -93,6 +96,11 @@ class IconViewScreen(
             context.matrices.peek().positionMatrix,
             1.0f, 1.0f, 1.0f, 1.0f
         );
+    }
+
+
+    override fun close() {
+        MinecraftClient.getInstance().setScreen(this.lastScreen);
     }
 
 }

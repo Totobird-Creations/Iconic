@@ -31,9 +31,9 @@ object PetPetGenerator : IconGenerator() {
     override val name : String = "petpet";
 
     override fun addArguments(root : LiteralArgumentBuilder<S>) {
-        root.then(argument("baseIcon", StringArgumentType.word())
+        root.then(argument("baseIcon", StringArgumentType.greedyString())
             .suggests{ _, b -> CompletableFuture.supplyAsync{ ->
-                for (s in ChatScanner.getSuggestions("")) {
+                for (s in ChatScanner.getSuggestions("", false)) {
                     b.suggest(s)
                 }
                 b.build()
@@ -44,7 +44,11 @@ object PetPetGenerator : IconGenerator() {
 
     private fun generatePetPet(baseIconName : String) {
         val baseIcon = try {
-            ImageIO.read(LOCAL_ICONS_PATH.resolve("${baseIconName}.png"))
+            ImageIO.read(if (baseIconName.startsWith("#")) {
+                IconCache.getInternalIconStream("default/${baseIconName.substring(1)}")
+            } else {
+                LOCAL_ICONS_PATH.resolve("${baseIconName}.png").inputStream()
+            })
         } catch (e : Exception) { throwError("Failed to load icon `${baseIconName}`: ${e.message ?: e}."); }
             ?: throwError("Failed to load icon `${baseIconName}`: Could not create image.");
 
@@ -84,7 +88,7 @@ object PetPetGenerator : IconGenerator() {
         }
 
         g.dispose();
-        saveIcon(Util.imageToBuffered(image), "petpet_${baseIconName}");
+        saveIcon(Util.imageToBuffered(image), "petpet_${baseIconName.removePrefix("#")}");
     }
 
 }

@@ -46,7 +46,7 @@ abstract class ChatInputSuggestorMixin {
             this.pendingSuggestions = CompletableFuture.supplyAsync(() -> {
                 StringRange range = StringRange.between(before.length() - prefixLen - ChatScanner.OUTGOING_PREFIX.length(), before.length());
                 ArrayList<Suggestion> suggestions = new ArrayList<>();
-                for (String suggestion : ChatScanner.getSuggestions(prefixWord)) {
+                for (String suggestion : ChatScanner.getSuggestions(prefixWord, true)) {
                     suggestions.add(new Suggestion(range, ChatScanner.OUTGOING_PREFIX + suggestion + ChatScanner.OUTGOING_SUFFIX));
                 }
                 return Suggestions.create(string, suggestions);

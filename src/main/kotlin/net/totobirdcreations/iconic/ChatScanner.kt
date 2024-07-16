@@ -1,5 +1,8 @@
 package net.totobirdcreations.iconic
 
+import net.minecraft.client.MinecraftClient
+import net.minecraft.text.Text
+import net.minecraft.util.Formatting
 import net.totobirdcreations.iconic.figura.FiguraEmojisAccessor
 
 
@@ -45,7 +48,7 @@ object ChatScanner {
         return if (inIcon) { return Pair(currentIcon.toString(), currentIcon.length + m) } else { null };
     }
     @JvmStatic
-    fun getSuggestions(prefix : String) : Set<String> {
+    fun getSuggestions(prefix : String, external : Boolean) : Set<String> {
         val files = mutableSetOf<String>();
         for (name in IconCache.getDefaultIconIconIds()) { if (prefix.isEmpty() || name.contains(prefix)) {
             files.add(name);
@@ -56,13 +59,15 @@ object ChatScanner {
                         && (prefix.isEmpty() || file.nameWithoutExtension.contains(prefix))
             )) { return@listFiles false; }
             val image = IconCache.loadLocalIcon(file);
-            return@listFiles (image != null && IconCache.validateIcon(image.width).isSuccess);
+            return@listFiles image != null;
         }?.map{ file -> file.nameWithoutExtension }
             ?: listOf()
         );
-        files.addAll(FiguraEmojisAccessor.getEmojiNames()
-            .filter{ iconName -> prefix.isEmpty() || iconName.contains(prefix) }
-        );
+        if (external) {
+            files.addAll(FiguraEmojisAccessor.getEmojiNames()
+                .filter{ iconName -> prefix.isEmpty() || iconName.contains(prefix) }
+            );
+        }
         return files;
     }
 
@@ -70,7 +75,7 @@ object ChatScanner {
     fun interceptOutgoingMessage(message : String, callback : (String) -> Unit) : Boolean {
         if ((! (this.alreadyIntercepted)) && OUTGOING_ICON_PATTERN.containsMatchIn(message)) {
             Thread{ ->
-                val msg = this.replaceMessageIcons(message);
+                val msg = this.replaceMessageIcons(message) ?: return@Thread;
                 this.alreadyIntercepted = true;
                 callback(msg);
                 this.alreadyIntercepted = false;
@@ -94,7 +99,7 @@ object ChatScanner {
                 || message.startsWith("l ");
     }
 
-    private fun replaceMessageIcons(message : String) : String {
+    private fun replaceMessageIcons(message : String) : String? {
         val matches = OUTGOING_ICON_PATTERN.findAll(message).toList();
         val iconNames = matches.map{ match -> match.groups[1]!!.value }.toSet();
         val threads      = Array<Thread?>(iconNames.size){ _ -> null };
@@ -110,8 +115,11 @@ object ChatScanner {
             val name        = match.groups[1]!!.value;
             val transportId = transportIds[name] ?: continue;
             val msg1 = msg.replaceRange((match.range.first - (message.length - msg.length))..(match.range.last - (message.length - msg.length)), "<:${name}:${transportId}:>");
-            if (msg1.length > 256) { break; }
             msg = msg1;
+        }
+        if (msg.length > 256) {
+            MinecraftClient.getInstance().player?.sendMessage(Text.literal("Resulting message is too long. Try removing some icons.").formatted(Formatting.GOLD));
+            return null;
         }
         return msg;
     }

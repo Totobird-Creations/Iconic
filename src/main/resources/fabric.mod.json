@@ -33,7 +33,7 @@
 	"accessWidener": "iconic.accesswidener",
 	"depends": {
 		"fabricloader"           : ">=0.15.7",
-		"minecraft"              : "~1.20.4",
+		"minecraft"              : "~1.20.1",
 		"java"                   : ">=17",
 		"fabric-api"             : "*",
 		"fabric-language-kotlin" : "*"

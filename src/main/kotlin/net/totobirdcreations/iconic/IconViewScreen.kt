@@ -96,6 +96,7 @@ open class IconViewScreen(
         );
     }
     override fun render(context : DrawContext, mouseX : Int, mouseY : Int, delta : Float) {
+        this.renderBackground(context);
         super.render(context, mouseX, mouseY, delta);
         this.renderGrid(context);
         this.renderIcon(context, this.imageMinX, this.imageMinY, this.imageSize, delta);
@@ -137,7 +138,7 @@ open class IconViewScreen(
                 x / scale, (y + (wh / h)) / scale,
                 0xffffff, false,
                 context.matrices.peek().positionMatrix, context.vertexConsumers,
-                TextRenderer.TextLayerType.NORMAL, 0, 0
+                TextRenderer.TextLayerType.NORMAL, 0, 15
             );
             context.matrices.pop();
         }

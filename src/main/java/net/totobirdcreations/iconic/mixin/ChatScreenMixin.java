@@ -49,8 +49,8 @@ abstract class ChatScreenMixin extends Screen {
             );
         }
         this.iconsButton.setPosition(this.width - 12, this.height - 12);
-        this.iconsButton.setWidth(8);
-        this.iconsButton.setHeight(8);
+        this.iconsButton.width  = 8;
+        this.iconsButton.height = 8;
     }
 
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)

@@ -8,6 +8,7 @@ import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents
 import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.client.MinecraftClient
+import net.minecraft.util.Util
 import net.totobirdcreations.iconic.generator.IconGenerator
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

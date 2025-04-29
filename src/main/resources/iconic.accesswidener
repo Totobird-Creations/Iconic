@@ -16,3 +16,5 @@ accessible field net/minecraft/client/font/FontStorage RANDOM Lnet/minecraft/uti
 accessible field net/minecraft/client/font/FontStorage blankGlyphRenderer Lnet/minecraft/client/font/GlyphRenderer;
 accessible field net/minecraft/client/font/FontStorage whiteRectangleGlyphRenderer Lnet/minecraft/client/font/GlyphRenderer;
 accessible field net/minecraft/client/gui/screen/ChatScreen chatField Lnet/minecraft/client/gui/widget/TextFieldWidget;
+accessible field net/minecraft/client/gui/widget/ClickableWidget width I
+accessible field net/minecraft/client/gui/widget/ClickableWidget height I
